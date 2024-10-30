@@ -33,7 +33,8 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
 
         FileObject file;
         try {
-            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", "META-INF/annotated-classes.txt");
+
+            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", FlamingockGraalvmStatics.CONFIGURATION_FILE);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

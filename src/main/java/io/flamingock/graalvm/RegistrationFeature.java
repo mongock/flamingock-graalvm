@@ -12,7 +12,7 @@ public class RegistrationFeature implements Feature {
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         ClassLoader classLoader = RegistrationFeature.class.getClassLoader();
-        try (InputStream inputStream = classLoader.getResourceAsStream("META-INF/annotated-classes.txt")) {
+        try (InputStream inputStream = classLoader.getResourceAsStream(FlamingockGraalvmStatics.CONFIGURATION_FILE)) {
             if (inputStream != null) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                     String className;
@@ -21,7 +21,7 @@ public class RegistrationFeature implements Feature {
                     }
                 }
             } else {
-                throw new RuntimeException("annotated-classes.txt not found in META-INF");
+                throw new RuntimeException(String.format("File[%s] not found", FlamingockGraalvmStatics.CONFIGURATION_FILE));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

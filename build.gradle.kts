@@ -1,11 +1,17 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
+    `java-gradle-plugin`
+    `kotlin-dsl`
     `maven-publish`
     id("java")
     id("org.graalvm.buildtools.native") version "0.10.3"
+
+    id("org.jetbrains.kotlin.jvm") version "1.8.10"
 }
 
 group = "io.flamingock"
-version = "1.0-SNAPSHOT"
+version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -14,6 +20,7 @@ repositories {
 dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.withType<JavaCompile> {
@@ -26,6 +33,15 @@ java {
     }
 }
 
+val libVersion = "1.0.1"
+gradlePlugin {
+    plugins {
+        create("autoConfigurePlugin") {
+            id = "io.flamingock.graalvmPlugin"
+            implementationClass = "io.flamingock.graalvm.AutoConfigurePlugin"
+        }
+    }
+}
 
 publishing {
     publications {
@@ -33,7 +49,6 @@ publishing {
             from(components["java"])
             groupId = "io.flamingock"
             artifactId = "graalvm-core"
-            version = "1.0.1"
         }
     }
     repositories {
@@ -43,4 +58,12 @@ publishing {
 
 tasks.test {
     useJUnitPlatform()
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "17"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "17"
 }
