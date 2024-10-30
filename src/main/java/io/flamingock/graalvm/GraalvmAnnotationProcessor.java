@@ -9,8 +9,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
-import java.io.FileWriter;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Set;
@@ -18,8 +18,6 @@ import java.util.Set;
 @SupportedAnnotationTypes("io.flamingock.graalvm.FlamingockGraalVM")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class GraalvmAnnotationProcessor extends AbstractProcessor {
-
-    private static final String ANNOTATED_CLASSES_PACKAGE = "io.flamingock.graalvm";
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -33,8 +31,15 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
 
         Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(FlamingockGraalVM.class);
 
+        FileObject file;
+        try {
+            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", "META-INF/annotated-classes.txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        try (FileWriter writer = new FileWriter("build/annotated-classes.txt")) {
+
+        try (Writer writer = file.openWriter()) {
             for (Element element : annotatedElements) {
                 if (element.getKind() == ElementKind.CLASS) {
                     String className = ((TypeElement) element).getQualifiedName().toString();

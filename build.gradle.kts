@@ -1,6 +1,7 @@
 plugins {
     `maven-publish`
     id("java")
+    id("org.graalvm.buildtools.native") version "0.10.3"
 }
 
 group = "io.flamingock"
@@ -25,12 +26,13 @@ java {
     }
 }
 
+
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
             groupId = "io.flamingock"
-            artifactId = "flamingock-graalvm"
+            artifactId = "graalvm-core"
             version = "1.0.1"
         }
     }
