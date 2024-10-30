@@ -1,12 +1,6 @@
 plugins {
-    `kotlin-dsl`
     `maven-publish`
     id("java")
-}
-apply {
-    plugin("org.jetbrains.kotlin.jvm")
-
-    plugin("maven-publish")
 }
 
 group = "io.flamingock"
@@ -14,7 +8,6 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    mavenLocal()
 }
 
 dependencies {
@@ -22,9 +15,27 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
+tasks.withType<JavaCompile> {
+    options.compilerArgs.add("-parameters")
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = "io.flamingock"
+            artifactId = "flamingock-graalvm"
+            version = "1.0.1"
+        }
+    }
+    repositories {
+        mavenLocal()
     }
 }
 

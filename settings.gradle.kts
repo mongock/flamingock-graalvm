@@ -1,2 +1,2 @@
-rootProject.name = "flamingock-graalvm-annotation-processor"
+rootProject.name = "flamingock-graalvm"
 
