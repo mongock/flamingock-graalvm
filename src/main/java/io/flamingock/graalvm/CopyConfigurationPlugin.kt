@@ -5,7 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.register
 
-class AutoConfigurePlugin : Plugin<Project> {
+class CopyConfigurationPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val copyAnnotatedClasses = project.tasks.register<Copy>("copyAnnotatedClasses") {
             dependsOn("compileJava")

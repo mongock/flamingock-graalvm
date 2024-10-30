@@ -38,7 +38,7 @@ gradlePlugin {
     plugins {
         create("autoConfigurePlugin") {
             id = "io.flamingock.graalvmPlugin"
-            implementationClass = "io.flamingock.graalvm.AutoConfigurePlugin"
+            implementationClass = "io.flamingock.graalvm.CopyConfigurationPlugin"
         }
     }
 }
