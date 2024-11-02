@@ -5,19 +5,34 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-@SupportedAnnotationTypes("io.flamingock.graalvm.FlamingockGraalVM")
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.flamingock.core.api.FlamingockConfiguration;
+import io.flamingock.core.api.annotations.FlamingockGraalVM;
+
+
+@SupportedAnnotationTypes("io.flamingock.core.api.annotations.FlamingockGraalVM")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class GraalvmAnnotationProcessor extends AbstractProcessor {
+
+    private final String logPrefix = "Flamingock Graalvm annotation processor: ";
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -26,34 +41,81 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
-        String logPrefix = "Flamingock Graalvm annotation processor: ";
         processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.NOTE, logPrefix + "starting");
 
         Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(FlamingockGraalVM.class);
 
-        FileObject file;
+
+
+        List<String> classes = new LinkedList<>();
         try {
-
-            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", FlamingockGraalvmStatics.CONFIGURATION_FILE);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-        try (Writer writer = file.openWriter()) {
             for (Element element : annotatedElements) {
                 if (element.getKind() == ElementKind.CLASS) {
                     String className = ((TypeElement) element).getQualifiedName().toString();
-                    writer.write(className + "\n");
+                    processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.NOTE, logPrefix + "Processing class: " + className);
+                    extractAnnotations(element);
+                    classes.add(className);
                     processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.NOTE, logPrefix + "Processed class: " + className);
                 }
             }
-        } catch (IOException e) {
+            writeConfiguration(new FlamingockConfiguration(true, classes));
+        } catch (Exception e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
+            throw new RuntimeException(logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
         }
 
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, logPrefix + "Successfully finished Flamingock annotation processor");
 
         return true;
     }
+
+    private void writeConfiguration(FlamingockConfiguration configuration) {
+        FileObject file;
+        try {
+
+            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", FlamingockConfiguration.FILE_PATH);
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to creating flamingock configuration file: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+        try (Writer writer = file.openWriter()) {
+            String serialisedObject = new ObjectMapper()
+                    .enable(SerializationFeature.INDENT_OUTPUT)
+                    .writeValueAsString(configuration);
+            writer.write(serialisedObject);
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
+            throw new RuntimeException(logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
+        }
+
+    }
+
+    private void extractAnnotations(Element element) {
+        // Get all annotations on the element
+        List<? extends AnnotationMirror> annotationMirrors = element.getAnnotationMirrors();
+
+        for (AnnotationMirror annotationMirror : annotationMirrors) {
+            // Get the annotation type (e.g., com.yourcompany.annotations.AdditionalAnnotation)
+            TypeMirror annotationType = annotationMirror.getAnnotationType();
+            String annotationName = annotationType.toString();
+
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                    "Found annotation: " + annotationName + " on element: " + element.getSimpleName());
+
+            // Extract annotation values if needed
+            if (annotationName.equals("io.mongock.api.annotations.ChangeUnit")) {
+                Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues =
+                        annotationMirror.getElementValues();
+
+                for (Map.Entry<? extends ExecutableElement, ? extends javax.lang.model.element.AnnotationValue> entry : elementValues.entrySet()) {
+                    String key = entry.getKey().getSimpleName().toString();
+                    String value = entry.getValue().getValue().toString();
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+                            "Annotation value: " + key + " = " + value);
+                }
+            }
+        }
+    }
+
 }

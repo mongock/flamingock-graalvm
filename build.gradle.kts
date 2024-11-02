@@ -15,12 +15,16 @@ version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
+    implementation(kotlin("stdlib-jdk8"))
+    implementation("io.flamingock:flamingock-core-api:1.0.0-SNAPSHOT")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.0")
+
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.withType<JavaCompile> {
