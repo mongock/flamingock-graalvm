@@ -22,9 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import io.flamingock.core.api.FlamingockConfiguration;
+import com.google.gson.Gson;
+import io.flamingock.core.api.FlamingockMetadata;
 import io.flamingock.core.api.annotations.FlamingockGraalVM;
 
 
@@ -46,7 +45,6 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
         Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(FlamingockGraalVM.class);
 
 
-
         List<String> classes = new LinkedList<>();
         try {
             for (Element element : annotatedElements) {
@@ -58,7 +56,9 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
                     processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.NOTE, logPrefix + "Processed class: " + className);
                 }
             }
-            writeConfiguration(new FlamingockConfiguration(true, classes));
+            FlamingockMetadata metadata = new FlamingockMetadata(true, classes);
+            writeJsonMetadata(metadata);
+            writeClassesToRegister(metadata);
         } catch (Exception e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
             throw new RuntimeException(logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
@@ -69,26 +69,43 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void writeConfiguration(FlamingockConfiguration configuration) {
+
+    //TODO REFACTOR THIS
+    private void writeJsonMetadata(FlamingockMetadata metadata) {
         FileObject file;
         try {
-
-            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", FlamingockConfiguration.FILE_PATH);
+            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", FlamingockMetadata.FILE_PATH);
         } catch (IOException e) {
-            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to creating flamingock configuration file: " + e.getMessage());
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to creating flamingock metadata file: " + e.getMessage());
             throw new RuntimeException(e);
         }
-
         try (Writer writer = file.openWriter()) {
-            String serialisedObject = new ObjectMapper()
-                    .enable(SerializationFeature.INDENT_OUTPUT)
-                    .writeValueAsString(configuration);
+            String serialisedObject =new Gson().toJson(metadata);
             writer.write(serialisedObject);
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
             throw new RuntimeException(logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
         }
+    }
 
+    //TODO REFACTOR THIS
+    private void writeClassesToRegister(FlamingockMetadata metadata) {
+        FileObject file;
+        try {
+            file = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", Constants.GRAALVM_REFLECT_CLASSES_PATH);
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to creating flamingock metadata file: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+        try (Writer writer = file.openWriter()) {
+            for(String clazz : metadata.getClasses()) {
+                writer.write(clazz);
+                writer.write(System.lineSeparator());
+            }
+        } catch (IOException e) {
+            processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
+            throw new RuntimeException(logPrefix + "Failed to write AnnotatedClasses file: " + e.getMessage());
+        }
     }
 
     private void extractAnnotations(Element element) {

@@ -5,8 +5,6 @@ plugins {
     `kotlin-dsl`
     `maven-publish`
     id("java")
-    id("org.graalvm.buildtools.native") version "0.10.3"
-
     id("org.jetbrains.kotlin.jvm") version "1.8.10"
 }
 
@@ -18,17 +16,15 @@ repositories {
     mavenLocal()
 }
 
+val jacksonVersion = "2.15.2"
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("io.flamingock:flamingock-core-api:1.0.0-SNAPSHOT")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.14.0")
+
+    implementation("com.google.code.gson:gson:2.11.0")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-}
-
-tasks.withType<JavaCompile> {
-    options.compilerArgs.add("-parameters")
 }
 
 java {

@@ -1,33 +1,36 @@
 package io.flamingock.graalvm;
 
-import io.flamingock.core.api.FlamingockConfiguration;
+import com.google.gson.Gson;
+import io.flamingock.core.api.FlamingockMetadata;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
-
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 
 public class RegistrationFeature implements Feature {
 
+    private Gson gson;
+
+    private Gson getGson() {
+        if (gson == null) {
+            gson = new Gson();
+        }
+        return gson;
+    }
+
+
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
-        ClassLoader classLoader = RegistrationFeature.class.getClassLoader();
-        try (InputStream inputStream = classLoader.getResourceAsStream(FlamingockConfiguration.FILE_PATH)) {
-            if (inputStream != null) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                    String className;
-                    while ((className = reader.readLine()) != null) {
-                        registerClass(className);
-                    }
-                }
-            } else {
-                throw new RuntimeException(String.format("File[%s] not found", FlamingockConfiguration.FILE_PATH));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        registerClass(FlamingockMetadata.class.getCanonicalName());
+//        FlamingockMetadata flamingockMetadata = new FlamingockMetadata();
+        List<String> classesToRegister= fromFile(Constants.GRAALVM_REFLECT_CLASSES_PATH);
+        classesToRegister.forEach(RegistrationFeature::registerClass);
     }
 
     private static void registerClass(String className) {
@@ -42,4 +45,27 @@ public class RegistrationFeature implements Feature {
         }
 
     }
+
+    public List<String> fromFile(String filePath) {
+
+        ClassLoader classLoader = RegistrationFeature.class.getClassLoader();
+        try (InputStream inputStream = classLoader.getResourceAsStream(filePath)) {
+            if (inputStream != null) {
+                List<String> classesToRegister = new LinkedList<>();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        classesToRegister.add(line);
+                    }
+                }
+                return classesToRegister;
+
+            } else {
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
