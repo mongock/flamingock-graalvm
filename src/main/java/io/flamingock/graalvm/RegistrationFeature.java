@@ -28,7 +28,6 @@ public class RegistrationFeature implements Feature {
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         registerClass(FlamingockMetadata.class.getCanonicalName());
-//        FlamingockMetadata flamingockMetadata = new FlamingockMetadata();
         List<String> classesToRegister= fromFile(Constants.GRAALVM_REFLECT_CLASSES_PATH);
         classesToRegister.forEach(RegistrationFeature::registerClass);
     }
