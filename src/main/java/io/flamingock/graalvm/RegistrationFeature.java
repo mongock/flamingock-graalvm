@@ -1,6 +1,5 @@
 package io.flamingock.graalvm;
 
-import com.google.gson.Gson;
 import io.flamingock.core.api.FlamingockMetadata;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
@@ -14,16 +13,6 @@ import java.util.List;
 
 
 public class RegistrationFeature implements Feature {
-
-    private Gson gson;
-
-    private Gson getGson() {
-        if (gson == null) {
-            gson = new Gson();
-        }
-        return gson;
-    }
-
 
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
@@ -42,11 +31,9 @@ public class RegistrationFeature implements Feature {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     public List<String> fromFile(String filePath) {
-
         ClassLoader classLoader = RegistrationFeature.class.getClassLoader();
         try (InputStream inputStream = classLoader.getResourceAsStream(filePath)) {
             if (inputStream != null) {
@@ -66,5 +53,4 @@ public class RegistrationFeature implements Feature {
             throw new RuntimeException(e);
         }
     }
-
 }
