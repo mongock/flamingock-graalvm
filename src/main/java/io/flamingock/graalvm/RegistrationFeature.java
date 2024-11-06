@@ -1,6 +1,7 @@
 package io.flamingock.graalvm;
 
-import io.flamingock.core.api.FlamingockMetadata;
+import io.flamingock.core.api.metadata.ChangeUnitMedata;
+import io.flamingock.core.api.metadata.FlamingockMetadata;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
@@ -17,17 +18,18 @@ public class RegistrationFeature implements Feature {
     @Override
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         registerClass(FlamingockMetadata.class.getCanonicalName());
+        registerClass(ChangeUnitMedata.class.getCanonicalName());
         List<String> classesToRegister= fromFile(Constants.GRAALVM_REFLECT_CLASSES_PATH);
         classesToRegister.forEach(RegistrationFeature::registerClass);
     }
 
     private static void registerClass(String className) {
         try {
-            System.out.printf("Flamingock: Registering class[%s]%n", className);
             Class<?> clazz = Class.forName(className);
             RuntimeReflection.register(clazz);
             RuntimeReflection.register(clazz.getDeclaredConstructors());
             RuntimeReflection.register(clazz.getDeclaredMethods());
+            System.out.printf("Flamingock: Registered class[%s]%n", className);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

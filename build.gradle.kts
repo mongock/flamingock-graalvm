@@ -37,8 +37,8 @@ val libVersion = "1.0.1"
 gradlePlugin {
     plugins {
         create("autoConfigurePlugin") {
-            id = "io.flamingock.graalvmPlugin"
-            implementationClass = "io.flamingock.graalvm.CopyConfigurationPlugin"
+            id = "io.flamingock.MetadataBundler"
+            implementationClass = "io.flamingock.graalvm.MetadataBundlerPlugin"
         }
     }
 }

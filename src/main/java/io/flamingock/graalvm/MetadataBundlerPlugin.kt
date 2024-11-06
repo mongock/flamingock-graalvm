@@ -1,12 +1,12 @@
 package io.flamingock.graalvm
 
-import io.flamingock.core.api.FlamingockMetadata
+import io.flamingock.core.api.metadata.FlamingockMetadata
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.register
 
-class CopyConfigurationPlugin : Plugin<Project> {
+class MetadataBundlerPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val copyMetadata = project.tasks.register<Copy>("copyMetadata") {
             dependsOn("compileJava")

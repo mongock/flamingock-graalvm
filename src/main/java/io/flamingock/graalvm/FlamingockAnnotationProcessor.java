@@ -1,8 +1,10 @@
 package io.flamingock.graalvm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.flamingock.core.api.FlamingockMetadata;
-import io.flamingock.core.api.annotations.FlamingockGraalVM;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.flamingock.core.api.annotations.BuildTimeProcessable;
+import io.flamingock.core.api.metadata.ChangeUnitMedata;
+import io.flamingock.core.api.metadata.FlamingockMetadata;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -26,13 +28,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
-@SupportedAnnotationTypes("io.flamingock.core.api.annotations.FlamingockGraalVM")
+@SupportedAnnotationTypes("io.flamingock.core.api.annotations.BuildTimeProcessable")
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
-public class GraalvmAnnotationProcessor extends AbstractProcessor {
+public class FlamingockAnnotationProcessor extends AbstractProcessor {
 
-    private final String logPrefix = "Flamingock Graalvm annotation processor: ";
+    private final String logPrefix = "Flamingock annotation processor: ";
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -44,7 +47,10 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
         processingEnv.getMessager().printMessage(javax.tools.Diagnostic.Kind.NOTE, logPrefix + "starting");
 
         try {
-            List<String> classes = extractClasses(roundEnv.getElementsAnnotatedWith(FlamingockGraalVM.class));
+            List<ChangeUnitMedata> classes = extractClasses(roundEnv.getElementsAnnotatedWith(BuildTimeProcessable.class))
+                    .stream()
+                    .map(ChangeUnitMedata::new)
+                    .collect(Collectors.toList());
             FlamingockMetadata metadata = new FlamingockMetadata(true, classes);
             buildFlamingockMetadataFile(metadata);
             buildRegistrationClasses(metadata);
@@ -61,9 +67,9 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
 
     private void buildRegistrationClasses(FlamingockMetadata metadata) {
         writeToFile(Constants.GRAALVM_REFLECT_CLASSES_PATH, writer -> {
-            for (String clazz : metadata.getClasses()) {
+            for (ChangeUnitMedata changeUnit : metadata.getChangeUnits()) {
                 try {
-                    writer.write(clazz);
+                    writer.write(changeUnit.getClassName());
                     writer.write(System.lineSeparator());
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -75,7 +81,7 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
     private void buildFlamingockMetadataFile(FlamingockMetadata metadata) {
         writeToFile(FlamingockMetadata.FILE_PATH, writer -> {
             try {
-                writer.write(new ObjectMapper().writeValueAsString(metadata));
+                writer.write(new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(metadata));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -123,7 +129,7 @@ public class GraalvmAnnotationProcessor extends AbstractProcessor {
             String annotationName = annotationType.toString();
 
             processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                    "Found annotation: " + annotationName + " on element: " + element.getSimpleName());
+                    logPrefix + "Found annotation[ " + annotationName + "] on element: " + element.getSimpleName());
 
             // Extract annotation values if needed
             if (annotationName.equals("io.mongock.api.annotations.ChangeUnit")) {
