@@ -2,6 +2,7 @@ package io.flamingock.graalvm;
 
 import io.flamingock.core.api.metadata.ChangeUnitMedata;
 import io.flamingock.core.api.metadata.FlamingockMetadata;
+import static io.flamingock.core.api.metadata.Constants.GRAALVM_REFLECT_CLASSES_PATH;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.hosted.RuntimeReflection;
 
@@ -19,7 +20,7 @@ public class RegistrationFeature implements Feature {
     public void beforeAnalysis(BeforeAnalysisAccess access) {
         registerClass(FlamingockMetadata.class.getCanonicalName());
         registerClass(ChangeUnitMedata.class.getCanonicalName());
-        List<String> classesToRegister= fromFile(Constants.GRAALVM_REFLECT_CLASSES_PATH);
+        List<String> classesToRegister= fromFile(GRAALVM_REFLECT_CLASSES_PATH);
         classesToRegister.forEach(RegistrationFeature::registerClass);
     }
 

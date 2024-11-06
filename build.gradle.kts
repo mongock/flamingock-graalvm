@@ -1,15 +1,7 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    `java-gradle-plugin`
-    `kotlin-dsl`
     `maven-publish`
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "1.8.10"
 }
-
-group = "io.flamingock"
-version = "1.0.2-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -18,7 +10,6 @@ repositories {
 
 val jacksonVersion = "2.15.2"
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
     implementation("io.flamingock:flamingock-core-api:1.0.0-SNAPSHOT")
 
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
@@ -33,15 +24,8 @@ java {
     }
 }
 
-val libVersion = "1.0.1"
-gradlePlugin {
-    plugins {
-        create("autoConfigurePlugin") {
-            id = "io.flamingock.MetadataBundler"
-            implementationClass = "io.flamingock.graalvm.MetadataBundlerPlugin"
-        }
-    }
-}
+group = "io.flamingock"
+version = "1.0.3-SNAPSHOT"
 
 publishing {
     publications {
@@ -58,12 +42,4 @@ publishing {
 
 tasks.test {
     useJUnitPlatform()
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "17"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "17"
 }
