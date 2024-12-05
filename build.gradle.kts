@@ -1,3 +1,6 @@
+import java.net.URL
+import javax.xml.parsers.DocumentBuilderFactory
+
 plugins {
     `maven-publish`
     id("java")
@@ -8,9 +11,13 @@ repositories {
     mavenLocal()
 }
 
+group = "io.flamingock"
+version = getFlamingockReleasedVersion()
+
 val jacksonVersion = "2.15.2"
+val flamingockVersion = "latest.release"
 dependencies {
-    implementation("io.flamingock:flamingock-core-api:1.0.0-SNAPSHOT")
+    implementation("io.flamingock:flamingock-core-api:$flamingockVersion")
 
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
 
@@ -24,8 +31,7 @@ java {
     }
 }
 
-group = "io.flamingock"
-version = "1.0.3-SNAPSHOT"
+
 
 publishing {
     publications {
@@ -42,4 +48,18 @@ publishing {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+
+fun getFlamingockReleasedVersion(): String {
+    val metadataUrl = "https://repo.maven.apache.org/maven2/io/flamingock/flamingock-core/maven-metadata.xml"
+    try {
+        val metadata = URL(metadataUrl).readText()
+        val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        val inputStream = metadata.byteInputStream()
+        val document = documentBuilder.parse(inputStream)
+        return document.getElementsByTagName("latest").item(0).textContent
+    } catch (e: Exception) {
+        throw RuntimeException("Cannot obtain Flamingock's latest version")
+    }
 }
