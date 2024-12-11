@@ -12,7 +12,7 @@ repositories {
 }
 
 group = "io.flamingock"
-version = getFlamingockReleasedVersion()
+version = "0.0.24-beta"//getFlamingockReleasedVersion()
 
 val jacksonVersion = "2.15.2"
 val flamingockVersion = "latest.release"
