@@ -10,7 +10,7 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'graalvm'
           java-version: '17'
 
       - name: Unit and Integration tests
